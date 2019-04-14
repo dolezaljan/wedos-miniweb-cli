@@ -402,6 +402,8 @@ def main():
                         filecontent = f.read()
                     f.closed
                     createpage (remotepath[:-5], filecontent)
+                else:
+                    print 'no operation'
         return 0
 
     
