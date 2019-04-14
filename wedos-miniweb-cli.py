@@ -24,6 +24,7 @@
 
 import netrc
 import urllib, urllib2, cookielib
+import mimetools, mimetypes
 import re
 import getopt, os, sys
 import time
@@ -369,9 +370,34 @@ def main():
                 remotepath = os.path.join(root, name)[len(path):]
                 if remotepath[0] == '/':
                     remotepath = remotepath[1:]
-                if remotepath [0:5] == 'files/':
-                    print 'file upload'
-                if remotepath[-5:] == '.html' and remotepath.find('/') == -1:
+                if remotepath [0:6] == 'files/':
+                    print 'file upload', name
+                    dirs = list (zip(*dfcreators)[0])
+                    updir = remotepath.rsplit('/', 1)[0] + '/'
+                    if dirs.index(updir)>=0:
+                        fcreator = dfcreators[dirs.index(updir)][2].replace('&amp;', '&').replace('%2F', '/')
+                    boundary = mimetools.choose_boundary()
+                    with open(os.path.join(root, name), 'r') as f:
+                        filecontent = f.read()
+                    f.closed
+                    mimetype = mimetypes.guess_type(name)[0] or 'application/octet-stream'
+                    body = (    '--'+boundary+
+                            '\r\nContent-Disposition: form-data; name="fm_action_type"'
+                            '\r\n'
+                            '\r\nupload'
+                            '\r\n--'+boundary+
+                            '\r\nContent-Disposition: form-data; name="fm_file"; filename="'+name+'"'
+                            '\r\nContent-Type: '+mimetype+
+                            '\r\n'
+                            '\r\n'+filecontent+
+                            '\r\n--'+boundary+'--'
+                            '\r\n')
+                    request = urllib2.Request(baseurl + fcreator)
+                    request.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
+                    request.add_header('Content-Length', len(body))
+                    request.add_data(body)
+                    wopener.open(request)
+                elif remotepath[-5:] == '.html' and remotepath.find('/') == -1:
                     with open(os.path.join(root, name), 'r') as f:
                         filecontent = f.read()
                     f.closed
