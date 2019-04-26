@@ -371,11 +371,16 @@ def main():
                 if remotepath[0] == '/':
                     remotepath = remotepath[1:]
                 if remotepath [0:6] == 'files/':
-                    print 'file upload', name
                     dirs = list (zip(*dfcreators)[0])
                     updir = remotepath.rsplit('/', 1)[0] + '/'
                     if dirs.index(updir)>=0:
+                        # if the file already exists, remove it, so that it can be replaced with the newer version
+                        remoteexists = [ tup for i, tup in enumerate(listofall) if tup[0] == remotepath ]
+                        if len(remoteexists) == 1:
+                            print('file remove ' + remotepath)
+                            wopener.open(remoteexists[0][3].replace('&amp;', '&').replace('%2F', '/'))
                         fcreator = dfcreators[dirs.index(updir)][2].replace('&amp;', '&').replace('%2F', '/')
+                    print 'file upload', name
                     boundary = mimetools.choose_boundary()
                     with open(os.path.join(root, name), 'r') as f:
                         filecontent = f.read()
